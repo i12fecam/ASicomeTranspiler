@@ -1,8 +1,7 @@
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import Lexer.Token;
+import Lexer.Tokenizer;
+
+import java.io.*;
 import java.util.Vector;
 
 public class Main {
@@ -13,7 +12,9 @@ public class Main {
         }
         String src ="";
         try {
-            src = Files.readString(Path.of(args[0]), java.nio.charset.Charset.defaultCharset());
+            ClassLoader classLoader = Main.class.getClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream("prueba.asi");
+            src = readFromInputStream(inputStream);
         }catch (Exception e){
             System.out.println("No se pudo leer el archivo correctamente");
             return;
@@ -23,5 +24,17 @@ public class Main {
         for (Token token : tokens){
             System.out.println(token);
         }
+    }
+    private static String readFromInputStream(InputStream inputStream)
+            throws IOException {
+        StringBuilder resultStringBuilder = new StringBuilder();
+        try (BufferedReader br
+                     = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                resultStringBuilder.append(line).append("\n");
+            }
+        }
+        return resultStringBuilder.toString();
     }
 }

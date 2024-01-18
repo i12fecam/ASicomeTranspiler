@@ -1,4 +1,4 @@
-
+package Lexer;
 
 
 public class Token {
@@ -46,5 +46,15 @@ public class Token {
 
     public void setCol(int col) {
         this.col = col;
+    }
+
+    @Override
+    public String toString() {
+        return "Lexer.Token{" +
+                "type=" + type +
+                ", value='" + value + '\'' +
+                ", line=" + line +
+                ", col=" + col +
+                '}';
     }
 }

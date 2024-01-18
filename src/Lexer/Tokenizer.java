@@ -1,4 +1,5 @@
-import java.util.Currency;
+package Lexer;
+
 import java.util.Vector;
 
 public class Tokenizer {
@@ -21,6 +22,13 @@ public class Tokenizer {
         }
         return _src.charAt(_curr+1);
     }
+
+    private boolean isFinished(){
+        if (_curr+1>=_end){
+            return true;
+        }
+        return false;
+    }
     private void advance(){
         _curr++;
         _currChar++;
@@ -35,16 +43,20 @@ public class Tokenizer {
         Vector<Token> res = new Vector<>();
         boolean done = false;
 
-        while(!done){
+        while(!isFinished()){
             switch (current()){
                 case ' ':
                 case '\t':
                     handleWhiteSpace();
+                    break;
                 case '\n':
                     foundNewLine();
                     break;
-                case '\\':
-                    handleSingleComment();
+                case '/':
+                    if(peek() == '/'){
+                        handleSingleComment();
+                    }
+                    //TODO error?
                     break;
                 case '{':
                     advance();
@@ -123,16 +135,19 @@ public class Tokenizer {
         int startLine=_currLine;
         int lenght=0;
         //TODO permitir caracteres mas especialitos como @ _ y numeros
-        while (Character.isLetter(current())){
+        while (Character.isLetter(current()) || Character.isDigit(current()) || current() == '@' || current() == '_'){
             advance();
+            lenght++;
         }
         String text= _src.substring(start,start+lenght);
 
-        if(text.equals("microinstrucciones") || text.equals("variables") || text.equals("program")){
-            res.add(new Token(TokenType.ReservedWord,text,startLine,startChar));
-        }else{
-            res.add(new Token(TokenType.Word,text,startLine,startChar));
+        switch (text) {
+            case "microinstrucciones" -> res.add(new Token(TokenType.microistruccionesRW, text, startLine, startChar));
+            case "variables" -> res.add(new Token(TokenType.variablesRW, text, startLine, startChar));
+            case "program" -> res.add(new Token(TokenType.programaRW, text, startLine, startChar));
+            default -> res.add(new Token(TokenType.Word, text, startLine, startChar));
         }
+
 
     }
 
@@ -145,7 +160,7 @@ public class Tokenizer {
             advance();
         }
         res.add(new Token(TokenType.DecimalNumber,_src.substring(start,start+lenght),startLine,startChar));
-
+        advance();
     }
 
     private void handleExadecimalNumber(Vector<Token> res) {
@@ -172,6 +187,7 @@ public class Tokenizer {
             }
         }
         res.add(new Token(TokenType.HexNumber,_src.substring(start,start+lenght),startLine,startChar));
+        advance();
 
     }
 
@@ -191,12 +207,10 @@ public class Tokenizer {
     }
 
     private void handleSingleComment(){
-        boolean found = false;
         advance();
-        while(!found){
-            if(current() == '\n'){
-                break;
-            }
+        advance();
+        while(current() != '\n'){
+            advance();
         }
      }
 }

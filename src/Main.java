@@ -1,5 +1,6 @@
 import Lexer.Token;
 import Lexer.Tokenizer;
+import Parser.Parser;
 
 import java.io.*;
 import java.util.Vector;
@@ -13,7 +14,7 @@ public class Main {
         String src ="";
         try {
             ClassLoader classLoader = Main.class.getClassLoader();
-            InputStream inputStream = classLoader.getResourceAsStream("prueba.asi");
+            InputStream inputStream = classLoader.getResourceAsStream("pruebasimple.asi");
             src = readFromInputStream(inputStream);
         }catch (Exception e){
             System.out.println("No se pudo leer el archivo correctamente");
@@ -24,6 +25,10 @@ public class Main {
         for (Token token : tokens){
             System.out.println(token);
         }
+        Parser parser = new Parser(tokens);
+        parser.Parse();
+        parser.getInstrucciones();
+        System.out.println("finished");
     }
     private static String readFromInputStream(InputStream inputStream)
             throws IOException {

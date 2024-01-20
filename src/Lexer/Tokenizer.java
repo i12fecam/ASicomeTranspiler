@@ -142,9 +142,11 @@ public class Tokenizer {
         String text= _src.substring(start,start+lenght);
 
         switch (text) {
-            case "microinstrucciones" -> res.add(new Token(TokenType.microistruccionesRW, text, startLine, startChar));
+            case "instrucciones" -> res.add(new Token(TokenType.instruccionesRW, text, startLine, startChar));
             case "variables" -> res.add(new Token(TokenType.variablesRW, text, startLine, startChar));
             case "program" -> res.add(new Token(TokenType.programaRW, text, startLine, startChar));
+            case "dir" -> res.add(new Token(TokenType.dirRW,text,startLine,startChar));
+            case "value" -> res.add(new Token(TokenType.valueRW,text,startLine,startChar));
             default -> res.add(new Token(TokenType.Word, text, startLine, startChar));
         }
 

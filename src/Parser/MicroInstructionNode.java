@@ -3,11 +3,14 @@ package Parser;
 public class MicroInstructionNode implements SyntaxTree{
     MicroInstruction mi;
 
-    public SyntaxTreeType getType() {
-        return null;
+    public MicroInstructionNode(MicroInstruction microInstruction) {
+        mi=microInstruction;
     }
 
-    public SyntaxTree getChildren(SyntaxTreeType type) {
-        return null;
+    public SyntaxTreeType getType() {
+        return SyntaxTreeType.MicroInstruction;
+    }
+
+    public SyntaxTree getChildren(SyntaxTreeType type){ return null;
     }
 }

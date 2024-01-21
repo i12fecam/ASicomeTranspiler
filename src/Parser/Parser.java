@@ -6,18 +6,20 @@ import Lexer.TokenType;
 import java.util.Vector;
 
 public class Parser {
-    private Vector<Token> _tokens;
+    private final Vector<Token> _tokens;
     private int _curr;
 
     private InstructionBlockNode instructionTree;
-
     //private InstructionVariableNode variableTree;
     //private ProgramNode programTree;
+
     public Parser(Vector<Token> tokens){
         _tokens = tokens;
         _tokens.add(new Token(TokenType.EOF,"",-1,-1));
     }
-
+    public InstructionBlockNode getInstrucciones(){
+        return instructionTree;
+    }
     private Token Current(){
         return _tokens.get(_curr);
     }
@@ -33,7 +35,9 @@ public class Parser {
 
     private Token Match(TokenType tokenType){
         if(Current().getType() == tokenType){
-          return NextToken();//Cambiar alomejor como funciona esto
+            Token tk = Current();
+            NextToken();
+          return tk;//Cambiar alomejor como funciona esto
         }
         return new Token(tokenType,"",-1,-1);
     }
@@ -48,9 +52,7 @@ public class Parser {
         }
 
     }
-    public InstructionBlockNode getInstrucciones(){
-        return instructionTree;
-    }
+
     private SyntaxTree ParseBlock(){
         if(Current().getType() == TokenType.instruccionesRW){
             return ParseInstructionsBlock();
@@ -85,7 +87,7 @@ public class Parser {
         Vector<InstructionLineNode> lines = new Vector<>();
         Match(TokenType.LeftBracket);
         while (Current().getType()!= TokenType.RightBracket){
-            //lines.add(ParseInstructionLine());
+            lines.add(ParseInstructionLine());
         }
         Match(TokenType.RightBracket);
 
@@ -93,6 +95,8 @@ public class Parser {
 
         return new InstructionNode(identifier,argument, lines);
     }
+
+
 
     private InstructionArgumentNode ParseInstructionArgument() {
         Match(TokenType.LeftParenthesis);
@@ -114,5 +118,91 @@ public class Parser {
         return new InstructionIdentifierNode(tk);
     }
 
+    private InstructionLineNode ParseInstructionLine() {
+        InstructionLineControlNode control= ParseInstructionControl();
+        Vector<MicroInstructionNode> microInstr = new Vector<>();
+        while (Current().getType()!=TokenType.SemiColon ){
+            if(Current().getType() == TokenType.Comma){
+                NextToken();
+            } //TODO solucionar esto porque está bastante mierdoso
+                microInstr.add(ParseMicroInstruction());
 
+        }
+        Match(TokenType.SemiColon);
+        return new InstructionLineNode(control,microInstr);
+    }
+
+    private MicroInstructionNode ParseMicroInstruction() {
+        //TODO terminar
+        MicroInstruction mi = null;
+        if(Current().getType() == TokenType.Word){
+            try {
+                 mi = MicroInstruction.valueOf(Current().getValue());
+            }catch (IllegalArgumentException e){
+                //TODO error
+            }
+            return new MicroInstructionNode(mi);
+        }
+        else{
+            //TODO error
+        }
+        return null;
+    }
+
+    private InstructionLineControlNode ParseInstructionControl() {
+
+        ControlConditionsNode conditions = ParseControlConditions();
+        Match(TokenType.Arrow);
+        ControlResultsNode results = ParseControlResult();
+        return new InstructionLineControlNode(conditions,results);
+    }
+
+
+
+    private ControlConditionsNode ParseControlConditions() {
+        Match(TokenType.LeftParenthesis);
+        Vector<ControlConditionNode> conditions = new Vector<>();
+        while (Current().getType()!= TokenType.RightParenthesis && Current().getType()!=TokenType.Comma){
+            if(Current().getType()==TokenType.Comma){
+                NextToken();
+            }
+            else if(Current().getType() == TokenType.Word || Current().getType() == TokenType.ExclamationMark){
+                conditions.add(ParseControlCondition());
+            }
+            else{
+                //TODO error
+            }
+        }
+        Match(TokenType.RightParenthesis);
+        return new ControlConditionsNode(conditions);
+    }
+
+    private ControlConditionNode ParseControlCondition() {
+        boolean activated = true;
+        if(Current().getType() == TokenType.ExclamationMark){
+            activated=false;
+            NextToken();
+        }
+        Token tk = Match(TokenType.Word);
+        BitEstatus bit = null;
+        try {
+             bit = BitEstatus.valueOf(tk.getValue());
+        }catch (IllegalArgumentException e){
+            //TODO error is not a valid condition
+        }
+        return new ControlConditionNode(activated,bit);
+    }
+
+    private ControlResultsNode ParseControlResult() {
+        Match(TokenType.LeftParenthesis);
+        Token tk = Match(TokenType.Word);
+        ControlResult res = null;
+        try {
+            res = ControlResult.valueOf(tk.getValue());
+        }catch (IllegalArgumentException e){
+            //TODO error is not valid result
+        }
+        Match(TokenType.RightParenthesis);
+        return new ControlResultsNode(res);
+    }
 }

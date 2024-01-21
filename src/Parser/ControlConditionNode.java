@@ -1,8 +1,14 @@
 package Parser;
 
-public class ControlCondition implements SyntaxTree{
+public class ControlConditionNode implements SyntaxTree{
     boolean activated;
     BitEstatus Condition;
+
+
+    public ControlConditionNode(boolean activated, BitEstatus bit) {
+        this.activated = activated;
+        Condition = bit;
+    }
 
     public SyntaxTreeType getType() {
         return null;

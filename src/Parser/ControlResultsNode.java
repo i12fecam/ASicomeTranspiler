@@ -1,10 +1,14 @@
 package Parser;
 
 public class ControlResultsNode implements SyntaxTree{
-    String result;
+    ControlResult result;
+
+    public ControlResultsNode(ControlResult res) {
+        result= res;
+    }
 
     public SyntaxTreeType getType() {
-        return null;
+        return SyntaxTreeType.ControlResults;
     }
 
     public SyntaxTree getChildren(SyntaxTreeType type) {

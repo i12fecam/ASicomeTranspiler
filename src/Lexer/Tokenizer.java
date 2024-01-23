@@ -7,6 +7,10 @@ public class Tokenizer {
     private int _curr = 0;
     private int _currChar = 0;
     private int _currLine = 0;
+
+    private CharPos _pos;
+
+    //private CharPos _end;
     private final int _end;
 
     public Tokenizer(String src) {
@@ -17,29 +21,24 @@ public class Tokenizer {
         return _src.charAt(_curr);
     }
     private char peek(){
-        if (_curr+1>=_end){
-            return '\0';
-        }
+
         return _src.charAt(_curr+1);
     }
 
     private boolean isFinished(){
-        if (_curr+1>=_end){
+        if (_pos.getAbsolutepos()+1>=_end){
             return true;
         }
         return false;
     }
     private void advance(){
-        _curr++;
-        _currChar++;
+        _pos.advanceChar();
     }
     private void foundNewLine(){
-        _curr++;
-        _currChar=0;
-        _currLine+=1;
+        _pos.registerNewLine();
     }
 
-     public Vector<Token> getTokens(){
+     public Vector<Token> getTokens() throws LexicalException {
         Vector<Token> res = new Vector<>();
         boolean done = false;
 
@@ -56,7 +55,9 @@ public class Tokenizer {
                     if(peek() == '/'){
                         handleSingleComment();
                     }
-                    //TODO error?
+                    else{
+                        throw new LexicalException("Dangling '/' found",new Range(_pos));
+                    }
                     break;
                 case '{':
                     advance();
@@ -101,7 +102,7 @@ public class Tokenizer {
                         res.add(new Token(TokenType.Arrow,"->",_currLine,_currChar));
                     }
                     else{
-                        //TODO gestionar error
+                        throw new LexicalException("Dangling '-' found",new Range(_pos));
                     }
                     break;
                 case '\0' :
@@ -121,7 +122,7 @@ public class Tokenizer {
                         handleText(res);
                     }
                     else{
-                        //TODO gestionar error
+                        throw new LexicalException(String.format("Character not recognized:%c",current()),new Range(_pos));
                     }
             }
         }
@@ -160,7 +161,7 @@ public class Tokenizer {
         int lenght=0;
         while (Character.isDigit(current())){
             advance();
-        }
+        }//TODO posible fuente de errores
         res.add(new Token(TokenType.DecimalNumber,_src.substring(start,start+lenght),startLine,startChar));
         advance();
     }

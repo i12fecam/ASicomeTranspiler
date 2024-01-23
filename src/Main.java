@@ -1,3 +1,4 @@
+import Lexer.LexicalException;
 import Lexer.Token;
 import Lexer.Tokenizer;
 import Parser.Parser;
@@ -6,7 +7,7 @@ import java.io.*;
 import java.util.Vector;
 
 public class Main {
-    public static void main(String[] args)  {
+    public static void main(String[] args) throws LexicalException {
         if(args.length != 1){
             System.out.println("Args: file_to_transpile.asi");
             return;
@@ -21,13 +22,19 @@ public class Main {
             return;
         }
         Tokenizer tokizer =new Tokenizer(src);
-        Vector<Token> tokens = tokizer.getTokens();
+        Vector<Token> tokens = new Vector<>();
+        try{
+            tokens = tokizer.getTokens();
+        }catch (LexicalException e){
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+
         for (Token token : tokens){
             System.out.println(token);
         }
         Parser parser = new Parser(tokens);
-        parser.Parse();
-        parser.getInstrucciones();
+
         System.out.println("finished");
     }
     private static String readFromInputStream(InputStream inputStream)

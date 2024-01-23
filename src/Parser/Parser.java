@@ -33,16 +33,19 @@ public class Parser {
 
     }
 
-    private Token Match(TokenType tokenType){
+    private Token Match(TokenType tokenType) throws SyntaxException {
         if(Current().getType() == tokenType){
             Token tk = Current();
             NextToken();
-          return tk;//Cambiar alomejor como funciona esto
+          return tk;
         }
-        return new Token(tokenType,"",-1,-1);
+        throw new SyntaxException(String.format("La palabra '%s' de tipo %s no coincide con el tipo que se esperaba %s",Current().toString(),
+                                                                                                                        Current().getType().toString(),
+                                                                                                                        tokenType.toString()),
+                                                                                                                        Current());
     }
 
-    public void Parse(){
+    public void Parse() throws SyntaxException {
 
         while (Current().getType()!=TokenType.EOF){
             SyntaxTree tree =ParseBlock();
@@ -53,7 +56,7 @@ public class Parser {
 
     }
 
-    private SyntaxTree ParseBlock(){
+    private SyntaxTree ParseBlock() throws SyntaxException {
         if(Current().getType() == TokenType.instruccionesRW){
             return ParseInstructionsBlock();
         } else if (Current().getType() == TokenType.variablesRW) {
@@ -69,7 +72,7 @@ public class Parser {
 
     }
 
-    private InstructionBlockNode ParseInstructionsBlock() {
+    private InstructionBlockNode ParseInstructionsBlock() throws SyntaxException {
         Match(TokenType.instruccionesRW);
         Match(TokenType.LeftBracket);
         Vector<InstructionNode> ins = new Vector<>();
@@ -80,7 +83,7 @@ public class Parser {
         return new InstructionBlockNode(ins);
     }
 
-    private InstructionNode ParseInstruction() {
+    private InstructionNode ParseInstruction() throws SyntaxException {
 
         InstructionIdentifierNode identifier = ParseInstructionIdentifier();
         InstructionArgumentNode argument = ParseInstructionArgument();
@@ -98,7 +101,7 @@ public class Parser {
 
 
 
-    private InstructionArgumentNode ParseInstructionArgument() {
+    private InstructionArgumentNode ParseInstructionArgument() throws SyntaxException {
         Match(TokenType.LeftParenthesis);
         Token tk = null;
         if(Current().getType() == TokenType.dirRW || Current().getType() == TokenType.valueRW){
@@ -112,13 +115,13 @@ public class Parser {
         return new InstructionArgumentNode(tk);
     }
 
-    private InstructionIdentifierNode ParseInstructionIdentifier() {
+    private InstructionIdentifierNode ParseInstructionIdentifier() throws SyntaxException {
         Token tk = Current();
         Match(TokenType.Word);
         return new InstructionIdentifierNode(tk);
     }
 
-    private InstructionLineNode ParseInstructionLine() {
+    private InstructionLineNode ParseInstructionLine() throws SyntaxException {
         InstructionLineControlNode control= ParseInstructionControl();
         Vector<MicroInstructionNode> microInstr = new Vector<>();
         while (Current().getType()!=TokenType.SemiColon ){
@@ -149,7 +152,7 @@ public class Parser {
         return null;
     }
 
-    private InstructionLineControlNode ParseInstructionControl() {
+    private InstructionLineControlNode ParseInstructionControl() throws SyntaxException {
 
         ControlConditionsNode conditions = ParseControlConditions();
         Match(TokenType.Arrow);
@@ -159,7 +162,7 @@ public class Parser {
 
 
 
-    private ControlConditionsNode ParseControlConditions() {
+    private ControlConditionsNode ParseControlConditions() throws SyntaxException {
         Match(TokenType.LeftParenthesis);
         Vector<ControlConditionNode> conditions = new Vector<>();
         while (Current().getType()!= TokenType.RightParenthesis && Current().getType()!=TokenType.Comma){
@@ -177,7 +180,7 @@ public class Parser {
         return new ControlConditionsNode(conditions);
     }
 
-    private ControlConditionNode ParseControlCondition() {
+    private ControlConditionNode ParseControlCondition() throws SyntaxException {
         boolean activated = true;
         if(Current().getType() == TokenType.ExclamationMark){
             activated=false;
@@ -193,7 +196,7 @@ public class Parser {
         return new ControlConditionNode(activated,bit);
     }
 
-    private ControlResultsNode ParseControlResult() {
+    private ControlResultsNode ParseControlResult() throws SyntaxException {
         Match(TokenType.LeftParenthesis);
         Token tk = Match(TokenType.Word);
         ControlResult res = null;

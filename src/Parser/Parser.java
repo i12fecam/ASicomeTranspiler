@@ -9,7 +9,7 @@ public class Parser {
     private final Vector<Token> _tokens;
     private int _curr;
 
-    IntructionManager instruction;
+    InstructionManager instruction;
     ControlLogicManager control;
 
 
@@ -66,8 +66,8 @@ public class Parser {
 
     }
 
-    private IntructionManager ParseInstructionsBlock() throws SyntaxException {
-        IntructionManager ins = new IntructionManager();
+    private InstructionManager ParseInstructionsBlock() throws SyntaxException {
+        InstructionManager ins = new InstructionManager();
         Match(TokenType.instruccionesRW);
         Match(TokenType.LeftBracket);
 

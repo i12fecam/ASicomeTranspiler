@@ -26,7 +26,7 @@ public class ControlLogicManager {
         }
         if(logics_.contains(cl)){
             logics_.add(cl);
-        }
+        }//TODO hacer que devuelva el numero donde se guarda el controlador
         return 0;
     }
 

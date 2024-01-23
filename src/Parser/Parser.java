@@ -9,17 +9,16 @@ public class Parser {
     private final Vector<Token> _tokens;
     private int _curr;
 
-    private InstructionBlockNode instructionTree;
-    //private InstructionVariableNode variableTree;
-    //private ProgramNode programTree;
+    IntructionManager instruction;
+    ControlLogicManager control;
+
 
     public Parser(Vector<Token> tokens){
         _tokens = tokens;
         _tokens.add(new Token(TokenType.EOF,"",-1,-1));
     }
-    public InstructionBlockNode getInstrucciones(){
-        return instructionTree;
-    }
+
+
     private Token Current(){
         return _tokens.get(_curr);
     }
@@ -47,96 +46,83 @@ public class Parser {
 
     public void Parse() throws SyntaxException {
 
-        while (Current().getType()!=TokenType.EOF){
-            SyntaxTree tree =ParseBlock();
-            if(tree.getType() == SyntaxTreeType.InstructionBlockNode){
-                instructionTree = (InstructionBlockNode) tree;
-            }
+        while (Current().getType()!=TokenType.EOF) {
+            ParseBlock();
         }
-
     }
 
-    private SyntaxTree ParseBlock() throws SyntaxException {
+    private  void ParseBlock() throws SyntaxException {
         if(Current().getType() == TokenType.instruccionesRW){
-            return ParseInstructionsBlock();
+            instruction = ParseInstructionsBlock();
         } else if (Current().getType() == TokenType.variablesRW) {
             //return ParseVariablesBlock();
         }
         else if(Current().getType() == TokenType.programaRW){
             //return ParseProgramBlock();
         }
-
         //TODO error?
-        return null;
+
 
 
     }
 
-    private InstructionBlockNode ParseInstructionsBlock() throws SyntaxException {
+    private IntructionManager ParseInstructionsBlock() throws SyntaxException {
+        IntructionManager ins = new IntructionManager();
         Match(TokenType.instruccionesRW);
         Match(TokenType.LeftBracket);
-        Vector<InstructionNode> ins = new Vector<>();
+
         while(Current().getType()!=TokenType.RightBracket){
             ins.add(ParseInstruction());
         }
         Match(TokenType.RightBracket);
-        return new InstructionBlockNode(ins);
+        return ins;
     }
 
-    private InstructionNode ParseInstruction() throws SyntaxException {
+    private Instruction ParseInstruction() throws SyntaxException {
 
-        InstructionIdentifierNode identifier = ParseInstructionIdentifier();
-        InstructionArgumentNode argument = ParseInstructionArgument();
-        Vector<InstructionLineNode> lines = new Vector<>();
-        Match(TokenType.LeftBracket);
-        while (Current().getType()!= TokenType.RightBracket){
-            lines.add(ParseInstructionLine());
-        }
-        Match(TokenType.RightBracket);
-
-
-
-        return new InstructionNode(identifier,argument, lines);
-    }
-
-
-
-    private InstructionArgumentNode ParseInstructionArgument() throws SyntaxException {
+        String identifier = Match(TokenType.Word).getValue();
+        //Args-------------
         Match(TokenType.LeftParenthesis);
-        Token tk = null;
+        String arg = null;
         if(Current().getType() == TokenType.dirRW || Current().getType() == TokenType.valueRW){
-            tk = Current();
+            arg =Current().getValue();
             NextToken();
         }
         else{
             //TODO error
         }
         Match(TokenType.RightParenthesis);
-        return new InstructionArgumentNode(tk);
+        Instruction ins = new Instruction(identifier,arg);
+        //--------------------
+        Match(TokenType.LeftBracket);
+        while (Current().getType()!= TokenType.RightBracket){
+            ins.Add(ParseStep());
+        }
+        Match(TokenType.RightBracket);
+
+
+
+        return ins;
     }
 
-    private InstructionIdentifierNode ParseInstructionIdentifier() throws SyntaxException {
-        Token tk = Current();
-        Match(TokenType.Word);
-        return new InstructionIdentifierNode(tk);
-    }
 
-    private InstructionLineNode ParseInstructionLine() throws SyntaxException {
-        InstructionLineControlNode control= ParseInstructionControl();
-        Vector<MicroInstructionNode> microInstr = new Vector<>();
+    private Step ParseStep() throws SyntaxException {
+
+        ControlLogic control= ParseControlLogic();
+
+        Step step = new Step(control);
         while (Current().getType()!=TokenType.SemiColon ){
             if(Current().getType() == TokenType.Comma){
                 NextToken();
             } //TODO solucionar esto porque está bastante mierdoso
-                microInstr.add(ParseMicroInstruction());
-
+                step.Add(ParseMicroInstruction());
         }
         Match(TokenType.SemiColon);
-        return new InstructionLineNode(control,microInstr);
+        return step;
     }
 
-    private MicroInstructionNode ParseMicroInstruction() {
-        //TODO terminar
+    private MicroInstruction ParseMicroInstruction() {
+
         MicroInstruction mi = null;
         if(Current().getType() == TokenType.Word){
             try {
@@ -144,7 +130,7 @@ public class Parser {
             }catch (IllegalArgumentException e){
                 //TODO error
             }
-            return new MicroInstructionNode(mi);
+            return mi;
         }
         else{
             //TODO error
@@ -152,60 +138,55 @@ public class Parser {
         return null;
     }
 
-    private InstructionLineControlNode ParseInstructionControl() throws SyntaxException {
+    private ControlLogic ParseControlLogic() throws SyntaxException {
 
-        ControlConditionsNode conditions = ParseControlConditions();
-        Match(TokenType.Arrow);
-        ControlResultsNode results = ParseControlResult();
-        return new InstructionLineControlNode(conditions,results);
-    }
+        ControlLogic control = new ControlLogic();
+        while (Current().getType()!= TokenType.RightParenthesis){
 
+            boolean activated= true;
+            SicomeBit bit = null;
+            switch (Current().getType()){
+                case Comma : NextToken(); break;
+                case ExclamationMark:
+                    activated = false;
+                    NextToken();
 
+                case Word:
+                    try {
+                        bit =SicomeBit.valueOf(Current().getValue());
+                    }catch (IllegalArgumentException e){
+                        //TODO error
+                    }
 
-    private ControlConditionsNode ParseControlConditions() throws SyntaxException {
-        Match(TokenType.LeftParenthesis);
-        Vector<ControlConditionNode> conditions = new Vector<>();
-        while (Current().getType()!= TokenType.RightParenthesis && Current().getType()!=TokenType.Comma){
-            if(Current().getType()==TokenType.Comma){
-                NextToken();
+                    NextToken();
+                    break;
+                default:
+                    //TODO error
             }
-            else if(Current().getType() == TokenType.Word || Current().getType() == TokenType.ExclamationMark){
-                conditions.add(ParseControlCondition());
-            }
-            else{
-                //TODO error
-            }
+            control.addCondition(new BitStatus(bit,activated));
+
         }
         Match(TokenType.RightParenthesis);
-        return new ControlConditionsNode(conditions);
-    }
 
-    private ControlConditionNode ParseControlCondition() throws SyntaxException {
-        boolean activated = true;
-        if(Current().getType() == TokenType.ExclamationMark){
-            activated=false;
-            NextToken();
-        }
-        Token tk = Match(TokenType.Word);
-        BitEstatus bit = null;
-        try {
-             bit = BitEstatus.valueOf(tk.getValue());
-        }catch (IllegalArgumentException e){
-            //TODO error is not a valid condition
-        }
-        return new ControlConditionNode(activated,bit);
-    }
 
-    private ControlResultsNode ParseControlResult() throws SyntaxException {
+        Match(TokenType.Arrow);
+
         Match(TokenType.LeftParenthesis);
         Token tk = Match(TokenType.Word);
-        ControlResult res = null;
+
         try {
-            res = ControlResult.valueOf(tk.getValue());
+            control.setResult( ControlResult.valueOf(tk.getValue()) );
         }catch (IllegalArgumentException e){
             //TODO error is not valid result
         }
         Match(TokenType.RightParenthesis);
-        return new ControlResultsNode(res);
+        return control;
     }
+
+
+
+
+
+
+
 }

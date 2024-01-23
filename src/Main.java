@@ -2,12 +2,13 @@ import Lexer.LexicalException;
 import Lexer.Token;
 import Lexer.Tokenizer;
 import Parser.Parser;
+import Parser.SyntaxException;
 
 import java.io.*;
 import java.util.Vector;
 
 public class Main {
-    public static void main(String[] args) throws LexicalException {
+    public static void main(String[] args) throws LexicalException{
         if(args.length != 1){
             System.out.println("Args: file_to_transpile.asi");
             return;
@@ -34,7 +35,11 @@ public class Main {
             System.out.println(token);
         }
         Parser parser = new Parser(tokens);
-
+        try {
+            parser.Parse();
+        } catch (SyntaxException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println("finished");
     }
     private static String readFromInputStream(InputStream inputStream)

@@ -1,6 +1,6 @@
 package Parser;
 
-public enum BitEstatus {
+public enum SicomeBit {
     Zb,
     Za,
     Zac,
